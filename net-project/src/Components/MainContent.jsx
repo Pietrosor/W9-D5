@@ -6,11 +6,12 @@ function MainContent() {
     watchAgain: [],
     newRelease: [],
   })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchMovies = async () => {
+      setLoading(true)
       try {
-        // Definiamo gli ID per le diverse sezioni
         const movieSections = {
           trending: [
             "tt3896198",
@@ -40,34 +41,39 @@ function MainContent() {
 
         const newMoviesState = {}
 
-        // Per ogni sezione, recuperiamo i film
         for (const [section, ids] of Object.entries(movieSections)) {
           const moviesData = await Promise.all(
             ids.map((id) =>
-              fetch(`http://www.omdbapi.com/?i=${id}&apikey=3353d51b`)
-                .then((response) => response.json())
-                .catch((error) =>
-                  console.error(`Errore nel fetch per ID ${id}:`, error)
-                )
+              fetch(`http://www.omdbapi.com/?i=${id}&apikey=3353d51b`).then(
+                (response) => response.json()
+              )
             )
           )
           newMoviesState[section] = moviesData
         }
 
-        setMovies(newMoviesState) // Aggiorniamo lo stato con i risultati
+        setMovies(newMoviesState)
       } catch (error) {
         console.error("Errore nel recupero dei film:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchMovies()
   }, [])
 
-  return (
+  return loading ? (
+    <div className="text-center text-white">
+      <p>Caricamento in corso...</p>
+      <div className="spinner-border text-light" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  ) : (
     <main>
       <div className="d-flex">
         <h1 className="text-white">TV Shows</h1>
-
         <div className="dropdown m-4">
           <button
             className="btn btn-secondary dropdown-toggle"
@@ -98,7 +104,6 @@ function MainContent() {
       </div>
 
       <div className="container-fluid mx-2">
-        {/* Funzione per generare le sezioni dinamicamente */}
         {Object.entries(movies).map(([section, moviesList]) => (
           <div className="d-block" key={section}>
             <h3 className="text-white d-block w-100 mt-4">
@@ -107,8 +112,11 @@ function MainContent() {
               {section === "newRelease" && "New Release"}
             </h3>
             <div className="row g-1">
-              {moviesList.map((movie, index) => (
-                <div key={index} className="col-6 col-md-4 col-lg-2">
+              {moviesList.map((movie) => (
+                <div
+                  key={movie.imdbID}
+                  className="col-6 col-md-4 col-lg-2 movie-hover"
+                >
                   <img
                     className="img-fluid"
                     src={movie.Poster}
